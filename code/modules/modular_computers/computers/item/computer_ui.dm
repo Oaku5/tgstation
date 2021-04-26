@@ -13,6 +13,10 @@
 			ui.close()
 		return
 
+	if(HAS_TRAIT(user, TRAIT_CHUNKYFINGERS))
+		to_chat(user, "<span class='warning'>Your fingers are too big to use this right now!</span>")
+		return
+
 	// Robots don't really need to see the screen, their wireless connection works as long as computer is on.
 	if(!screen_on && !issilicon(user))
 		if(ui)
@@ -80,7 +84,7 @@
 		if(P in idle_threads)
 			running = TRUE
 
-		data["programs"] += list(list("name" = P.filename, "desc" = P.filedesc, "running" = running))
+		data["programs"] += list(list("name" = P.filename, "desc" = P.filedesc, "running" = running, "icon" = P.program_icon, "alert" = P.alert_pending))
 
 	data["has_light"] = has_light
 	data["light_on"] = light_on
@@ -90,8 +94,10 @@
 
 // Handles user's GUI input
 /obj/item/modular_computer/ui_act(action, params)
-	if(..())
+	. = ..()
+	if(.)
 		return
+
 	var/obj/item/computer_hardware/hard_drive/hard_drive = all_components[MC_HDD]
 	switch(action)
 		if("PC_exit")
@@ -109,7 +115,7 @@
 			active_program.program_state = PROGRAM_STATE_BACKGROUND // Should close any existing UIs
 
 			active_program = null
-			update_icon()
+			update_appearance()
 			if(user && istype(user))
 				ui_interact(user) // Re-open the UI on this computer. It should show the main screen now.
 
@@ -146,8 +152,9 @@
 			if(P in idle_threads)
 				P.program_state = PROGRAM_STATE_ACTIVE
 				active_program = P
+				P.alert_pending = FALSE
 				idle_threads.Remove(P)
-				update_icon()
+				update_appearance()
 				return
 
 			var/obj/item/computer_hardware/processor_unit/PU = all_components[MC_CPU]
@@ -161,16 +168,12 @@
 				return
 			if(P.run_program(user))
 				active_program = P
-				update_icon()
+				P.alert_pending = FALSE
+				update_appearance()
 			return 1
 
 		if("PC_toggle_light")
-			set_light_on(!light_on)
-			if(light_on)
-				set_light(comp_light_luminosity, 1, comp_light_color)
-			else
-				set_light(0)
-			return TRUE
+			return toggle_flashlight()
 
 		if("PC_light_color")
 			var/mob/user = usr
@@ -182,10 +185,7 @@
 				if(color_hex2num(new_color) < 200) //Colors too dark are rejected
 					to_chat(user, "<span class='warning'>That color is too dark! Choose a lighter one.</span>")
 					new_color = null
-			comp_light_color = new_color
-			set_light_color(new_color)
-			update_light()
-			return TRUE
+			return set_flashlight_color(new_color)
 
 		if("PC_Eject_Disk")
 			var/param = params["name"]

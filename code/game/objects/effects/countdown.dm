@@ -7,7 +7,7 @@
 
 	invisibility = INVISIBILITY_OBSERVER
 	anchored = TRUE
-	layer = GHOST_LAYER
+	plane = GHOST_PLANE
 	color = "#ff0000" // text color
 	var/text_size = 3 // larger values clip when the displayed text is larger than 2 digits.
 	var/started = FALSE
@@ -51,7 +51,7 @@
 	displayed_text = new_val
 
 	if(displayed_text)
-		maptext = "<span class='maptext'><font size = [text_size]>[displayed_text]</font></span>"
+		maptext = MAPTEXT("<font size = [text_size]>[displayed_text]</font>")
 	else
 		maptext = null
 
@@ -59,9 +59,6 @@
 	attached_to = null
 	STOP_PROCESSING(SSfastprocess, src)
 	. = ..()
-
-/obj/effect/countdown/ex_act(severity, target) //immune to explosions
-	return
 
 /obj/effect/countdown/singularity_pull()
 	return
@@ -162,7 +159,7 @@
 	name = "flower bud countdown"
 
 /obj/effect/countdown/flower_bud/get_value()
-	var/obj/structure/alien/resin/flower_bud_enemy/bud = attached_to
+	var/obj/structure/alien/resin/flower_bud/bud = attached_to
 	if(!istype(bud))
 		return
 	if(!bud.finish_time)
